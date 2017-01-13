@@ -228,9 +228,6 @@ function liga64Update() {
 		exit($exitMessage);
 }
 
-
-
-
 function liga64_diaeinsaetze($atts) {
 	$atts = shortcode_atts(
 		array('id' => '',
@@ -860,22 +857,29 @@ function liga64_requestTabelle($ligaId, $tag) {
 
 function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 	$liga64options = get_option('liga64_options');
-
+	$portnr = 80;
+	$sslprefix = '';
+	
 	// use a HTTP POST instead of curl
 	$host     = $liga64options['liga64url'];
 	$apikey   = $liga64options['liga64apikey'];
+	
+	if(liga64_startsWith($host, 'https')) {
+		$portnr 	= 443;
+		$sslprefix 	= 'ssl://'; 
+	}
 
 	$urlParams = parse_url($host);
 
-	$pfad = 'api/'.$method.'/';
+	$pfad = 'api/'.$method;
 	if(isset($urlParams['path']) && liga64_endsWith($urlParams['path'], '/') == false)
 		$pfad = '/'.$pfad;
 
 	$daten = json_encode($searchObject);
+	
+	$socket = fsockopen($sslprefix.$urlParams['host'], $portnr, $errno, $errstr);
 
-	$socket = fsockopen($urlParams['host'], 80, $errno, $errstr);
-
-	$postData  = "POST ".$urlParams['path'].$pfad." HTTP/1.1\r\n";
+	$postData  = "POST /".$urlParams['path'].$pfad." HTTP/1.1\r\n";
 	$postData .= "Host: ".$urlParams['host']."\r\n";
 	$postData .= "Content-Type: application/json; charset=UTF-8\r\n";
 	$postData .= "Content-length: ". strlen($daten) ."\r\n";
@@ -883,6 +887,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 	$postData .= "Connection: close\r\n\r\n";
 	$postData .= $daten;
 	fputs($socket, $postData);
+	
 
 	$res = "";
 	while(!feof($socket)) {
@@ -913,6 +918,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 		if(!is_int($res[$i]))
 			$response .= $res[$i];
 	}
+	
 	
 	for($i = 0; $i < count($res); $i++) {
 		if(liga64_isJSONString($response)) {
@@ -1001,8 +1007,8 @@ function liga64_admin() {
 		
 		if(	filter_var($liga64url, FILTER_VALIDATE_URL) &&
 			filter_var($liga64referer, FILTER_VALIDATE_URL) &&
-			filter_var($liga64apikey, FILTER_VALIDATE_STRING) &&
-			filter_var($liga64comment, FILTER_VALIDATE_STRING)) {
+			filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/')))
+		) {
 	
 				$liga64options = array();
 				$liga64options['liga64url'] 	= $liga64url;
@@ -1012,11 +1018,15 @@ function liga64_admin() {
 				update_option('liga64_options', $liga64options);
 				
 			}
+			else {
+			var_dump(filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/'))));
+				die("error");
+			}
 	}
 	else {
 		$liga64options = get_option('liga64_options');
 		if(!isset($liga64options) || $liga64options == false) {
-			$liga64options['liga64url'] = 'http://www.liga64.de';
+			$liga64options['liga64url'] = 'https://www.liga64.de';
 			$liga64options['liga64referer'] = get_option('siteurl');
 			$liga64options['liga64comment'] = get_option('blogname');
 		}
