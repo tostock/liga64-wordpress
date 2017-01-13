@@ -980,20 +980,32 @@ function liga64_admin() {
 	global $wpdb;
 
 	if(isset($_GET["requestAPIKey"])) {
-	$apikey = liga64_requestAPIKey();
-	$liga64options = get_option('liga64_options');
-	$liga64options['liga64apikey'] = $apikey;
-	update_option('liga64_options', $liga64options);
+		$apikey 		= liga64_requestAPIKey();
+		$liga64options 	= get_option('liga64_options');
+		$liga64options['liga64apikey'] = $apikey;
+		update_option('liga64_options', $liga64options);
 	}
 
 	if(isset($_POST['submit']))
 	{
-		$liga64options = array();
-		$liga64options['liga64url'] = $_POST['liga64url'];
-		$liga64options['liga64apikey'] = $_POST['liga64apikey'];
-		$liga64options['liga64referer'] = $_POST['liga64referer'];
-		$liga64options['liga64comment'] = $_POST['liga64comment'];
-		update_option('liga64_options', $liga64options);
+		$liga64url 		= filter_var($_POST['liga64url'], FILTER_SANITIZE_URL);
+		$liga64apikey 	= filter_var($_POST['liga64apikey'], FILTER_SANITIZE_STRING);
+		$liga64referer 	= filter_var($_POST['liga64referer'], FILTER_SANITIZE_URL);
+		$liga64comment	= filter_var($_POST['liga64comment'], FILTER_SANITIZE_STRING);
+		
+		if(	filter_var($liga64url, FILTER_VALIDATE_URL) &&
+			filter_var($liga64referer, FILTER_VALIDATE_URL) &&
+			filter_var($liga64apikey, FILTER_VALIDATE_STRING) &&
+			filter_var($liga64comment, FILTER_VALIDATE_STRING)) {
+	
+				$liga64options = array();
+				$liga64options['liga64url'] 	= $liga64url;
+				$liga64options['liga64apikey'] 	= $liga64apikey;
+				$liga64options['liga64referer'] = $liga64referer;
+				$liga64options['liga64comment'] = $liga64comment;
+				update_option('liga64_options', $liga64options);
+				
+			}
 	}
 	else {
 		$liga64options = get_option('liga64_options');
@@ -1016,35 +1028,35 @@ function liga64_admin() {
           <tr>
             <th scope="row">URL:</td>
             <td>
-              <input name="liga64url" type="text" id="liga64url" value="<?php echo $liga64options['liga64url']; ?>" class="regular-text">
+              <input name="liga64url" type="text" id="liga64url" value="<?php echo esc_url($liga64options['liga64url']); ?>" class="regular-text">
               <p class="description">Die URL zur Schnittstelle.</p>
             </td>
           </tr>
           <tr>
             <th scope="row">Referer:</td>
             <td>
-              <input name="liga64referer" type="text" id="liga64referer" value="<?php echo $liga64options['liga64referer']; ?>" class="regular-text">
+              <input name="liga64referer" type="text" id="liga64referer" value="<?php echo esc_url($liga64options['liga64referer']); ?>" class="regular-text">
               <p class="description">Der Referer ist (für gewöhnlich) die URL deiner Seite.</p>
             </td>
           </tr>
           <tr>
             <th scope="row">Beschreibung:</td>
             <td>
-              <input name="liga64comment" type="text" id="liga64comment" value="<?php echo $liga64options['liga64comment']; ?>" class="regular-text">
+              <input name="liga64comment" type="text" id="liga64comment" value="<?php echo esc_html($liga64options['liga64comment']); ?>" class="regular-text">
               <p class="description">Beschreibe in wenigen Worten oder einem Titel deine Seite.</p>
             </td>
           </tr>
           <tr>
             <th scope="row">API-Key:</td>
             <td>
-              <input name="liga64apikey" type="text" id="liga64apikey" value="<?php echo $liga64options['liga64apikey']; ?>" class="regular-text">
+              <input name="liga64apikey" type="text" id="liga64apikey" value="<?php echo esc_html($liga64options['liga64apikey']); ?>" class="regular-text">
               <p class="description">Trage hier deinen API-Key ein oder beantrage einen solchen.</p>
             </td>
           </tr>
           <tr>
             <th scope="row">Chronjob-URL:</td>
             <td>
-              <input name="liga64chronjoburl" type="text" id="liga64chronjoburl" value="<?php echo get_site_url().'/wp-admin/admin-ajax.php?action=liga64Update' ?>" class="regular-text" style="width: 600px;" disabled>
+              <input name="liga64chronjoburl" type="text" id="liga64chronjoburl" value="<?php echo esc_url(admin_url().'admin-ajax.php?action=liga64Update'); ?>" class="regular-text" style="width: 600px;" disabled>
               <p class="description">Diesen Link via Cronjob aufrufen, damit die Daten über die Shortcodes aktualisiert werden.</p>
             </td>
           </tr>
