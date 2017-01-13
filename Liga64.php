@@ -39,7 +39,7 @@ class Liga64Store {
 	public $value;
 }
 
-function getRGBACode($i, $o = '0.5') {
+function liga64_getRGBACode($i, $o = '0.5') {
 	$rgba = array();
 	$rgba[] = 'rgba(46, 204, 113, '.$o.')';
 	$rgba[] = 'rgba(52, 152, 219, '.$o.')';
@@ -55,7 +55,7 @@ function getRGBACode($i, $o = '0.5') {
 	return $rgba[$i];
 }
 
-function getHexCode($i) {
+function liga64_getHexCode($i) {
 	$hex = array();
 	$hex[] = '#2ecc71';
 	$hex[] = '#3498db';
@@ -70,8 +70,7 @@ function getHexCode($i) {
 
 }
 
-
-function cmp($a, $b) {
+function liga64_cmp($a, $b) {
 	if($a['einsatz'] > $b['einsatz'])
 		return -1;
 	elseif($a['einsatz'] < $b['einsatz'])
@@ -87,6 +86,19 @@ function cmp($a, $b) {
 	}
 }
 
+function liga64_startsWith($haystack, $needle) {
+     $length = strlen($needle);
+     return (substr($haystack, 0, $length) === $needle);
+}
+
+function liga64_endsWith($haystack, $needle) {
+    $length = strlen($needle);
+    if ($length == 0) {
+        return true;
+    }
+
+    return (substr($haystack, -$length) === $needle);
+}
 
 function liga64Update() {
 	$requestOK = true;
@@ -214,19 +226,6 @@ function liga64Update() {
 
 
 
-function startsWith($haystack, $needle) {
-     $length = strlen($needle);
-     return (substr($haystack, 0, $length) === $needle);
-}
-
-function endsWith($haystack, $needle) {
-    $length = strlen($needle);
-    if ($length == 0) {
-        return true;
-    }
-
-    return (substr($haystack, -$length) === $needle);
-}
 
 function liga64_diaeinsaetze($atts) {
 	$atts = shortcode_atts(
@@ -383,8 +382,7 @@ function liga64_diasetzliste($atts) {
 		$data['einsatz'] = $einsatz;
 		$liste[] = $data;
 	}
-	//usort($liste, build_sorter('einsatz'));
-	usort($liste, "cmp");
+	usort($liste, "liga64_cmp");
 
 	ob_start();
 	$output = '';
@@ -408,12 +406,12 @@ function liga64_diasetzliste($atts) {
 	$output .= '		datasets: [{'."\r\n";
 	$output .= '			label: \''.$liste[0]['name'].'\','."\r\n";
 	$output .= '			data: '.json_encode($liste[0]['ergebnis']).','."\r\n";
-	$output .= '			backgroundColor: "'.getRGBACode(0).'"'."\r\n";
+	$output .= '			backgroundColor: "'.liga64_getRGBACode(0).'"'."\r\n";
 	for($i = 1; $i < count($liste); $i++) {
 		$output .= '		}, {'."\r\n";
 		$output .= '			label: \''.$liste[$i]['name'].'\','."\r\n";
 		$output .= '			data: '.json_encode($liste[$i]['ergebnis']).','."\r\n";
-		$output .= '			backgroundColor: "'.getRGBACode($i).'"'."\r\n";
+		$output .= '			backgroundColor: "'.liga64_getRGBACode($i).'"'."\r\n";
 	}
 	$output .= '		}]'."\r\n";
 	$output .= '	}'."\r\n";
@@ -788,7 +786,7 @@ function liga64_admin_actions() {
 	add_options_page('Liga64', 'Liga64', 'manage_options', __FILE__, 'liga64_admin');
 }
 
-function isJSONString($str) {
+function liga64_isJSONString($str) {
 	$isJSON = false;
 	if(is_string($str)) {
 		if(is_object(json_decode($str))) {
@@ -866,7 +864,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 	$urlParams = parse_url($host);
 
 	$pfad = 'api/'.$method.'/';
-	if(isset($urlParams['path']) && endsWith($urlParams['path'], '/') == false)
+	if(isset($urlParams['path']) && liga64_endsWith($urlParams['path'], '/') == false)
 		$pfad = '/'.$pfad;
 
 	$daten = json_encode($searchObject);
@@ -913,7 +911,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 	}
 	
 	for($i = 0; $i < count($res); $i++) {
-		if(isJSONString($response)) {
+		if(liga64_isJSONString($response)) {
 			$obj = json_decode($response);
 			if($obj->Ok == true) {
 				return $response;
