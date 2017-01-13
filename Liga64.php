@@ -100,6 +100,10 @@ function liga64_endsWith($haystack, $needle) {
     return (substr($haystack, -$length) === $needle);
 }
 
+/**
+ * liga64Update has to be an function, that could be triggered
+ * from an external command like a cronjob.
+ */
 function liga64Update() {
 	$requestOK = true;
 	$exitMessage = '';
@@ -935,9 +939,11 @@ function liga64_requestAPIKey() {
 	$host     = $liga64options['liga64url'];
 	$referer  = $liga64options['liga64referer'];
 	$comment  = $liga64options['liga64comment'];
+	
+	$source		= 'WordpressPluginv1';
 
 	$pfad = '/api/registerPage/';
-	$daten = '&host=' . $host . '&referer=' . $referer . '&comment=' . $comment;
+	$daten = '&host=' . $host . '&referer=' . $referer . '&comment=' . $comment. '&source=' . $source;
 
 	$urlParams = parse_url($host);
 	$socket = fsockopen($urlParams['host'], 80, $errno, $errstr, 50);
