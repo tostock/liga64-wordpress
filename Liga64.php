@@ -100,6 +100,16 @@ function liga64_endsWith($haystack, $needle) {
     return (substr($haystack, -$length) === $needle);
 }
 
+function liga64_getCurrentWettkampfTag($liga) {
+	$wettkaempfe = $liga->Wettkaempfe;
+	$wettkampftag = 0;
+	foreach($wettkaempfe as $w) {
+		if($w->Ausgetragen == true && $w->Wettkampftag >= $wettkampftag)
+			$wettkampftag = $w->Wettkampftag;
+	}
+	return $wettkampftag;
+}
+
 /**
  * liga64Update has to be an function, that could be triggered
  * from an external command like a cronjob.
@@ -402,10 +412,16 @@ function liga64_diasetzliste($atts) {
 
 	$wettkampftage = count($schuetzen[0]->Ergebnisse);
 
+	
 	$wettkampftageLabels = array();
-	for($i = 0; $i < $wettkampftage; $i++) {
+	for($i = 0; $i < $aktuellerWettkampfTag; $i++) {
 		$wettkampftageLabels[] = ($i + 1);
+		
+		
+		
 	}
+	
+	var_dump();
 
 	$chartName = 'liga64SetzlisteChart'.$atts['id'].microtime();
 	$output .= '<canvas id="'.$chartName.'" width="500" height="600"></canvas>'."\r\n";
@@ -654,8 +670,10 @@ function liga64_setzliste($atts) {
 			break;
 		}
 	}
-
+	
 	$liga = $tabellenDaten->Ligen[0];
+	$aktuellerWettkampfTag = liga64_getCurrentWettkampfTag($liga);
+	
 	$setzliste = $liga->Setzliste;
 	$mannschaft = null;
 	$schuetzen = null;
