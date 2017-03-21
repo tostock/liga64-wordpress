@@ -727,6 +727,9 @@ function liga64_tabelle($atts) {
 			break;
 		}
 	}
+	
+	if(count($tabellenDaten->Ligen) == 0)
+		throw "Es liegen keine Daten vor!";
 
 	$liga = $tabellenDaten->Ligen[0];
 	$tabelle = $liga->Tabelle;
