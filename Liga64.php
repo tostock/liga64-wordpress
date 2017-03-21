@@ -107,7 +107,7 @@ function liga64_endsWith($haystack, $needle) {
 function liga64Update() {
 	$requestOK = true;
 	$exitMessage = '';
-	
+
 	//$liga64store = get_option('liga64_ligastore');
 	if(!isset($ligastore)) {
 
@@ -123,7 +123,7 @@ function liga64Update() {
 		), $shortcodeprefix ) );
 
 	$string = $atts['find'];
-	$args = array('s' => $string, 'post_type' => array('post', 'page'));
+	$args = array('s' => $string, 'post_type' => array('post', 'page'), 'posts_per_page' => -1);
 
 	$the_query = new WP_Query( $args );
 
@@ -164,18 +164,22 @@ function liga64Update() {
 			$res = null;
 			switch(trim($shortCodeRequests[$i]['code'])) {
 				case Liga64Constants::Tabelle :
+					echo '"Lade Tabelle der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestTabelle($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 
 				case Liga64Constants::Setzliste :
+					echo '"Lade Setzliste der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestSetzliste($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 
 				case Liga64Constants::Wettkampf :
+					echo '"Lade Wettkämpfe der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestWettkampf($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 
 				default:
+					echo '"Lade Daten der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestAll($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 			}
@@ -252,11 +256,11 @@ function liga64_diaeinsaetze($atts) {
 			break;
 		}
 	}
-	
+
 	if(empty($ergebnisDaten) || (isset($ergebnisDaten) && count($ergebnisDaten->Ligen) == 0)) {
 		return 'Es liegen keine Daten vor!';
 	}
-	
+
 	$liga = $ergebnisDaten->Ligen[0];
 	$setzliste = $liga->Setzliste;
 	$mannschaft = null;
@@ -361,7 +365,7 @@ function liga64_diasetzliste($atts) {
 	if(empty($tabellenDaten) || (isset($tabellenDaten) && count($tabellenDaten->Ligen) == 0)) {
 		return 'Es liegen keine Daten vor!';
 	}
-	
+
 	$liga = $tabellenDaten->Ligen[0];
 	$setzliste = $liga->Setzliste;
 	$mannschaft = null;
@@ -456,11 +460,11 @@ function liga64_diateamchart($atts) {
 			break;
 		}
 	}
-	
+
 	if(empty($ergebnisDaten) || (isset($ergebnisDaten) && count($ergebnisDaten->Ligen) == 0)) {
 		return 'Es liegen keine Daten vor!';
 	}
-	
+
 	$liga = $ergebnisDaten->Ligen[0];
 	$wettkaempfe = $liga->Wettkaempfe;
 
@@ -742,7 +746,7 @@ function liga64_tabelle($atts) {
 			break;
 		}
 	}
-	
+
 	if(empty($tabellenDaten) || (isset($tabellenDaten) && count($tabellenDaten->Ligen) == 0)) {
 		return 'Es liegen keine Daten vor!';
 	}
@@ -878,14 +882,14 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 	$liga64options = get_option('liga64_options');
 	$portnr = 80;
 	$sslprefix = '';
-	
+
 	// use a HTTP POST instead of curl
 	$host     = $liga64options['liga64url'];
 	$apikey   = $liga64options['liga64apikey'];
-	
+
 	if(liga64_startsWith($host, 'https')) {
 		$portnr 	= 443;
-		$sslprefix 	= 'ssl://'; 
+		$sslprefix 	= 'ssl://';
 	}
 
 	$urlParams = parse_url($host);
@@ -895,7 +899,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 		$pfad = '/'.$pfad;
 
 	$daten = json_encode($searchObject);
-	
+
 	$socket = fsockopen($sslprefix.$urlParams['host'], $portnr, $errno, $errstr);
 
 	$postData  = "POST /".$urlParams['path'].$pfad." HTTP/1.1\r\n";
@@ -906,7 +910,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 	$postData .= "Connection: close\r\n\r\n";
 	$postData .= $daten;
 	fputs($socket, $postData);
-	
+
 
 	$res = "";
 	while(!feof($socket)) {
@@ -937,8 +941,8 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 		if(!is_int($res[$i]))
 			$response .= $res[$i];
 	}
-	
-	
+
+
 	for($i = 0; $i < count($res); $i++) {
 		if(liga64_isJSONString($response)) {
 			$obj = json_decode($response);
@@ -964,7 +968,7 @@ function liga64_requestAPIKey() {
 	$host     = $liga64options['liga64url'];
 	$referer  = $liga64options['liga64referer'];
 	$comment  = $liga64options['liga64comment'];
-	
+
 	$source		= 'WordpressPluginv1';
 
 	$pfad = '/api/registerPage/';
@@ -1023,19 +1027,19 @@ function liga64_admin() {
 		$liga64apikey 	= filter_var($_POST['liga64apikey'], FILTER_SANITIZE_STRING);
 		$liga64referer 	= filter_var($_POST['liga64referer'], FILTER_SANITIZE_URL);
 		$liga64comment	= filter_var($_POST['liga64comment'], FILTER_SANITIZE_STRING);
-		
+
 		if(	filter_var($liga64url, FILTER_VALIDATE_URL) &&
 			filter_var($liga64referer, FILTER_VALIDATE_URL) &&
 			filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/')))
 		) {
-	
+
 				$liga64options = array();
 				$liga64options['liga64url'] 	= $liga64url;
 				$liga64options['liga64apikey'] 	= $liga64apikey;
 				$liga64options['liga64referer'] = $liga64referer;
 				$liga64options['liga64comment'] = $liga64comment;
 				update_option('liga64_options', $liga64options);
-				
+
 			}
 			else {
 			var_dump(filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/'))));
