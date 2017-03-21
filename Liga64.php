@@ -252,6 +252,11 @@ function liga64_diaeinsaetze($atts) {
 			break;
 		}
 	}
+	
+	if(empty($ergebnisDaten) || (isset($ergebnisDaten) && count($ergebnisDaten->Ligen) == 0)) {
+		return 'Es liegen keine Daten vor!';
+	}
+	
 	$liga = $ergebnisDaten->Ligen[0];
 	$setzliste = $liga->Setzliste;
 	$mannschaft = null;
@@ -353,6 +358,10 @@ function liga64_diasetzliste($atts) {
 		}
 	}
 
+	if(empty($tabellenDaten) || (isset($tabellenDaten) && count($tabellenDaten->Ligen) == 0)) {
+		return 'Es liegen keine Daten vor!';
+	}
+	
 	$liga = $tabellenDaten->Ligen[0];
 	$setzliste = $liga->Setzliste;
 	$mannschaft = null;
@@ -447,6 +456,11 @@ function liga64_diateamchart($atts) {
 			break;
 		}
 	}
+	
+	if(empty($ergebnisDaten) || (isset($ergebnisDaten) && count($ergebnisDaten->Ligen) == 0)) {
+		return 'Es liegen keine Daten vor!';
+	}
+	
 	$liga = $ergebnisDaten->Ligen[0];
 	$wettkaempfe = $liga->Wettkaempfe;
 
@@ -730,7 +744,7 @@ function liga64_tabelle($atts) {
 	}
 	
 	if(empty($tabellenDaten) || (isset($tabellenDaten) && count($tabellenDaten->Ligen) == 0)) {
-		throw new Exception("Es liegen keine Daten vor!");
+		return 'Es liegen keine Daten vor!';
 	}
 
 	$liga = $tabellenDaten->Ligen[0];
