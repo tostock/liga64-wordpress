@@ -164,22 +164,22 @@ function liga64Update() {
 			$res = null;
 			switch(trim($shortCodeRequests[$i]['code'])) {
 				case Liga64Constants::Tabelle :
-					echo '"Lade Tabelle der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+					echo '"#'.($i + 1).' Lade Tabelle der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestTabelle($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 
 				case Liga64Constants::Setzliste :
-					echo '"Lade Setzliste der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+					echo '"#'.($i + 1).' Lade Setzliste der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestSetzliste($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 
 				case Liga64Constants::Wettkampf :
-					echo '"Lade Wettkämpfe der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+					echo '"#'.($i + 1).' Lade Wettkämpfe der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestWettkampf($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 
 				default:
-					echo '"Lade Daten der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+					echo '"#'.($i + 1).' Lade Daten der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
 					$res = liga64_requestAll($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
 				break;
 			}
