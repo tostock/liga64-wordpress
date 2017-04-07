@@ -4,7 +4,7 @@ Plugin Name: Liga64
 Plugin URI: http://www.liga64.de/
 Description: Das offizielle Plugin von Liga64 um Tabellen auf Wordpress-Seiten einzubinden.
 Version: 0.1.0
-Author: Tobias Stock <tobias@liga64.de>
+Author: Tobias Stock <tobias(at)liga64.de>
 Author URI: http://www.liga64.de/
 */
 
