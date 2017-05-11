@@ -796,22 +796,22 @@ function liga64_tabelle($atts) {
 	$tabelle .= "    </tr>\r\n";
 	//for($i = 0; $i < count($tabellenDaten); $i++) {
 	foreach($mannschaften as $obj) {
-		if(isset($atts['filter']) && $atts['filter'] != '' && preg_match('/'.$atts['filter'].'/', $obj->Name)) {
-			$boldprefix = '<b><strong>';
-			$boldsuffix = '</b></strong>';
-		}
-		else {
-			$boldprefix = '';
-			$boldsuffix = '';
+		$trStyle = '';
+		if (
+		        isset($atts['filter']) &&
+                $atts['filter'] != '' &&
+                preg_match('/'.$atts['filter'].'/', $obj->Name)
+        ) {
+			$trStyle = ' style="font-weight: bold"';
 		}
 
-		$tabelle .= "    <tr>\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->Rang.$boldsuffix.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Name.$boldsuffix.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->Punkte.':'.$obj->Tabellenplatzierung->VergebenePunkte.$boldsuffix.'</td>'."\r\n";
+		$tabelle .= "    <tr$trStyle>\r\n";
+		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Rang.'</td>'."\r\n";
+		$tabelle .= '      <td>'.$obj->Name.'</td>'."\r\n";
+		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Punkte.':'.$obj->Tabellenplatzierung->VergebenePunkte.'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->GewonneneDuelle.':'.$obj->Tabellenplatzierung->VerloreneDuelle.$boldsuffix.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->Ringe.':'.$obj->Tabellenplatzierung->VergebeneRinge.$boldsuffix.'</td>'."\r\n";
+			$tabelle .= '      <td>'.$obj->Tabellenplatzierung->GewonneneDuelle.':'.$obj->Tabellenplatzierung->VerloreneDuelle.'</td>'."\r\n";
+		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Ringe.':'.$obj->Tabellenplatzierung->VergebeneRinge.'</td>'."\r\n";
 		$tabelle .= "    </tr>\r\n";
 	}
 	$tabelle .= '  </tbody>';
