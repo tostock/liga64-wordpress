@@ -607,18 +607,36 @@ function liga64_wettkampf($atts) {
 	$duellHeim = (int)$wettkampf->Heimmannschaft->Duellpunkte;
 	$duellGast = (int)$wettkampf->Gastmannschaft->Duellpunkte;
 	for($sa = 0; $sa < $schuetzenanzahl; $sa++) {
+		$heimSchuetze = $wettkampf->Heimmannschaft->Schuetzen[$sa];
+		$gastSchuetze = $wettkampf->Gastmannschaft->Schuetzen[$sa];
 		$duellHeim += $wettkampf->Heimmannschaft->Schuetzen[$sa]->Ergebnis->Punkte;
 		$duellGast += $wettkampf->Gastmannschaft->Schuetzen[$sa]->Ergebnis->Punkte;
-
-		$tabelle .= "    <tr>\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Vorname.' '.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Nachname.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Ergebnis->Ringe.'</td>'."\r\n";
+		$akClass = '';
+		$akLabel = '';
+		if (
+			(bool)$heimSchuetze->Ergebnis->IsAK ||
+			(bool)$gastSchuetze->Ergebnis->IsAK
+		) {
+			$akClass = ' style="color: lightgrey" class="ak-schuetze"';
+			$akLabel = ' <span title="außer Konkurrenz">(AK)</span>';
+		}
+		$tabelle .= "    <tr$akClass>\r\n";
+		if (!empty($heimSchuetze->Vorname)) {
+			$tabelle .= '      <td>' . $heimSchuetze->Vorname . ' ' . $heimSchuetze->Nachname . $akLabel . '</td>' . "\r\n";
+		} else {
+			$tabelle .= '      <td> </td>'."\r\n";
+		}
+		$tabelle .= '      <td>'.$heimSchuetze->Ergebnis->Ringe.'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Ergebnis->Punkte.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Vorname.' '.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Nachname.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Ergebnis->Ringe.'</td>'."\r\n";
+			$tabelle .= '      <td>'.$heimSchuetze->Ergebnis->Punkte.'</td>'."\r\n";
+		if (!empty($gastSchuetze->Vorname)) {
+			$tabelle .= '      <td>' . $gastSchuetze->Vorname . ' ' . $gastSchuetze->Nachname . $akLabel . '</td>' . "\r\n";
+		} else {
+			$tabelle .= '      <td> </td>'."\r\n";
+		}
+		$tabelle .= '      <td>'.$gastSchuetze->Ergebnis->Ringe.'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Ergebnis->Punkte.'</td>'."\r\n";
+			$tabelle .= '      <td>'.$gastSchuetze->Ergebnis->Punkte.'</td>'."\r\n";
 
 		$tabelle .= "    </tr>\r\n";
 	}
