@@ -607,18 +607,36 @@ function liga64_wettkampf($atts) {
 	$duellHeim = (int)$wettkampf->Heimmannschaft->Duellpunkte;
 	$duellGast = (int)$wettkampf->Gastmannschaft->Duellpunkte;
 	for($sa = 0; $sa < $schuetzenanzahl; $sa++) {
+		$heimSchuetze = $wettkampf->Heimmannschaft->Schuetzen[$sa];
+		$gastSchuetze = $wettkampf->Gastmannschaft->Schuetzen[$sa];
 		$duellHeim += $wettkampf->Heimmannschaft->Schuetzen[$sa]->Ergebnis->Punkte;
 		$duellGast += $wettkampf->Gastmannschaft->Schuetzen[$sa]->Ergebnis->Punkte;
-
-		$tabelle .= "    <tr>\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Vorname.' '.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Nachname.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Ergebnis->Ringe.'</td>'."\r\n";
+		$akClass = '';
+		$akLabel = '';
+		if (
+			(bool)$heimSchuetze->Ergebnis->IsAK ||
+			(bool)$gastSchuetze->Ergebnis->IsAK
+		) {
+			$akClass = ' style="color: lightgrey" class="ak-schuetze"';
+			$akLabel = ' <span title="außer Konkurrenz">(AK)</span>';
+		}
+		$tabelle .= "    <tr$akClass>\r\n";
+		if (!empty($heimSchuetze->Vorname)) {
+			$tabelle .= '      <td>' . $heimSchuetze->Vorname . ' ' . $heimSchuetze->Nachname . $akLabel . '</td>' . "\r\n";
+		} else {
+			$tabelle .= '      <td> </td>'."\r\n";
+		}
+		$tabelle .= '      <td>'.$heimSchuetze->Ergebnis->Ringe.'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$wettkampf->Heimmannschaft->Schuetzen[$sa]->Ergebnis->Punkte.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Vorname.' '.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Nachname.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Ergebnis->Ringe.'</td>'."\r\n";
+			$tabelle .= '      <td>'.$heimSchuetze->Ergebnis->Punkte.'</td>'."\r\n";
+		if (!empty($gastSchuetze->Vorname)) {
+			$tabelle .= '      <td>' . $gastSchuetze->Vorname . ' ' . $gastSchuetze->Nachname . $akLabel . '</td>' . "\r\n";
+		} else {
+			$tabelle .= '      <td> </td>'."\r\n";
+		}
+		$tabelle .= '      <td>'.$gastSchuetze->Ergebnis->Ringe.'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$wettkampf->Gastmannschaft->Schuetzen[$sa]->Ergebnis->Punkte.'</td>'."\r\n";
+			$tabelle .= '      <td>'.$gastSchuetze->Ergebnis->Punkte.'</td>'."\r\n";
 
 		$tabelle .= "    </tr>\r\n";
 	}
@@ -796,22 +814,22 @@ function liga64_tabelle($atts) {
 	$tabelle .= "    </tr>\r\n";
 	//for($i = 0; $i < count($tabellenDaten); $i++) {
 	foreach($mannschaften as $obj) {
-		if(isset($atts['filter']) && $atts['filter'] != '' && preg_match('/'.$atts['filter'].'/', $obj->Name)) {
-			$boldprefix = '<b><strong>';
-			$boldsuffix = '</b></strong>';
-		}
-		else {
-			$boldprefix = '';
-			$boldsuffix = '';
+		$trStyle = '';
+		if (
+		        isset($atts['filter']) &&
+                $atts['filter'] != '' &&
+                preg_match('/'.$atts['filter'].'/', $obj->Name)
+        ) {
+			$trStyle = ' style="font-weight: bold"';
 		}
 
-		$tabelle .= "    <tr>\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->Rang.$boldsuffix.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Name.$boldsuffix.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->Punkte.':'.$obj->Tabellenplatzierung->VergebenePunkte.$boldsuffix.'</td>'."\r\n";
+		$tabelle .= "    <tr$trStyle>\r\n";
+		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Rang.'</td>'."\r\n";
+		$tabelle .= '      <td>'.$obj->Name.'</td>'."\r\n";
+		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Punkte.':'.$obj->Tabellenplatzierung->VergebenePunkte.'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->GewonneneDuelle.':'.$obj->Tabellenplatzierung->VerloreneDuelle.$boldsuffix.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$boldprefix.$obj->Tabellenplatzierung->Ringe.':'.$obj->Tabellenplatzierung->VergebeneRinge.$boldsuffix.'</td>'."\r\n";
+			$tabelle .= '      <td>'.$obj->Tabellenplatzierung->GewonneneDuelle.':'.$obj->Tabellenplatzierung->VerloreneDuelle.'</td>'."\r\n";
+		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Ringe.':'.$obj->Tabellenplatzierung->VergebeneRinge.'</td>'."\r\n";
 		$tabelle .= "    </tr>\r\n";
 	}
 	$tabelle .= '  </tbody>';
