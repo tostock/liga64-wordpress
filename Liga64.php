@@ -3,7 +3,7 @@
 Plugin Name: Liga64
 Plugin URI: http://www.liga64.de/
 Description: Das offizielle Plugin von Liga64 um Tabellen auf Wordpress-Seiten einzubinden.
-Version: 0.1.0
+Version: 0.2.0
 Author: Tobias Stock <tobias(at)liga64.de>
 Author URI: http://www.liga64.de/
 */
@@ -38,6 +38,7 @@ class Liga64Store {
 	public $tag;
 	public $value;
 }
+
 
 function liga64_getRGBACode($i, $o = '0.5') {
 	$rgba = array();
@@ -100,6 +101,22 @@ function liga64_endsWith($haystack, $needle) {
     return (substr($haystack, -$length) === $needle);
 }
 
+function liga64_isJSONString($str) {
+	$isJSON = false;
+	if(is_string($str)) {
+		if(is_object(json_decode($str))) {
+			$isJSON = true;
+		}
+		elseif(is_array(json_decode($str))) {
+			$isJSON = true;
+		}
+		else
+			$isJSON = false;
+	}
+	return $isJSON;
+}
+
+
 function liga64_getCurrentWettkampfTag($liga) {
 	$wettkaempfe = $liga->Wettkaempfe;
 	$wettkampftag = 0;
@@ -110,6 +127,11 @@ function liga64_getCurrentWettkampfTag($liga) {
 	return $wettkampftag;
 }
 
+
+function liga64_admin_actions() {
+	add_options_page('Liga64', 'Liga64', 'manage_options', __FILE__, 'liga64_admin');
+}
+
 /**
  * liga64Update has to be an function, that could be triggered
  * from an external command like a cronjob.
@@ -118,119 +140,124 @@ function liga64Update() {
 	$requestOK = true;
 	$exitMessage = '';
 
-	//$liga64store = get_option('liga64_ligastore');
-	if(!isset($ligastore)) {
+	$liga64options = get_option('liga64_options');
+	$nounce = $_REQUEST['nounce'];
 
-		$liga64store = array();
-	}
-
-	$shortcodeprefix = Liga64Constants::ShorcodePrefix;
-
-	ob_start();
-
-	extract( shortcode_atts( array(
-			'find' => '',
-		), $shortcodeprefix ) );
-
-	$string = $atts['find'];
-	$args = array('s' => $string, 'post_type' => array('post', 'page'), 'posts_per_page' => -1);
-
-	$the_query = new WP_Query( $args );
-
-	$shortCodeRequests = array();
-	$allRequests = array();
-
-	// finde alle Shortcodes, welche mit Liga64 in Verbindung stehen.
-	$posts = $the_query->posts;
-	for($i = 0; $i < count($posts); $i++) {
-		$postContent = $posts[$i]->post_content;
-		if (preg_match_all('/.*(\['.$shortcodeprefix.'.*\]).*/', $postContent, $match)) {
-			for($j = 0; $j < count($match[1]); $j++) {
-					if(preg_match('/\[(.*?)[\s]/', $match[1][$j], $shortcodename)) {
-						preg_match('/\[.*id=(\d*).*/', $match[1][$j], $id);
-						preg_match('/\[.*tag=(\d*).*/', $match[1][$j], $tag);
-						$shortcodename[1] = Liga64Constants::All;
-						if(!in_array($id[1], $allRequests)) {
-							$shortCodeRequests[] = array('code' => $shortcodename[1], 'id' => $id[1], 'tag' => $tag[1]);
-							$allRequests[] = $id[1];
-						}
-					}
-					elseif(preg_match('/\[(.*?)[\]]/', $match[1][$j], $shortcodename)) {
-						$shortcodename[1] = Liga64Constants::All;
-						if(!in_array($id[1], $allRequests)) {
-							$shortCodeRequests[] = array('code' => $shortcodename[1]);
-							$allRequests[] = $id[1];
-						}
-					}
-					preg_match('/\[(.*)[\s]/', $match[1][$j], $shortcodename);
-			}
+	if(isset($nounce) && isset($liga64options['liga64nonce']) && $liga64options['liga64nonce'] == $nounce) {
+		if(!isset($ligastore)) {
+			$liga64store = array();
 		}
-	}
 
-	// starte Abfrage an Liga64
-	$ids = array();
-	try {
-		for($i = 0; $i < count($shortCodeRequests); $i++) {
-			$res = null;
-			switch(trim($shortCodeRequests[$i]['code'])) {
-				case Liga64Constants::Tabelle :
-					echo '"#'.($i + 1).' Lade Tabelle der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
-					$res = liga64_requestTabelle($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
-				break;
+		$shortcodeprefix = Liga64Constants::ShorcodePrefix;
 
-				case Liga64Constants::Setzliste :
-					echo '"#'.($i + 1).' Lade Setzliste der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
-					$res = liga64_requestSetzliste($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
-				break;
+		ob_start();
 
-				case Liga64Constants::Wettkampf :
-					echo '"#'.($i + 1).' Lade Wettkämpfe der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
-					$res = liga64_requestWettkampf($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
-				break;
+		extract( shortcode_atts( array(
+				'find' => '',
+			), $shortcodeprefix ) );
 
-				default:
-					echo '"#'.($i + 1).' Lade Daten der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
-					$res = liga64_requestAll($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
-				break;
-			}
+		$string = $atts['find'];
+		$args = array('s' => $string, 'post_type' => array('post', 'page'), 'posts_per_page' => -1);
 
-			if(isset($res)) {
-				$ls = new Liga64Store();
-				$ls->code = $shortCodeRequests[$i]['code'];
-				$ls->id = $shortCodeRequests[$i]['id'];
-				$ls->tag = $shortCodeRequests[$i]['tag'];
-				$ls->value = $res;
+		$the_query = new WP_Query( $args );
 
-				if(!in_array($ls->id, $ids)) {
-					$liga64store[] = $ls;
-					$ids[] = $ls->id;
+		$shortCodeRequests = array();
+		$allRequests = array();
+
+		// finde alle Shortcodes, welche mit Liga64 in Verbindung stehen.
+		$posts = $the_query->posts;
+		for($i = 0; $i < count($posts); $i++) {
+			$postContent = $posts[$i]->post_content;
+			if (preg_match_all('/.*(\['.$shortcodeprefix.'.*\]).*/', $postContent, $match)) {
+				for($j = 0; $j < count($match[1]); $j++) {
+						if(preg_match('/\[(.*?)[\s]/', $match[1][$j], $shortcodename)) {
+							preg_match('/\[.*id=(\d*).*/', $match[1][$j], $id);
+							preg_match('/\[.*tag=(\d*).*/', $match[1][$j], $tag);
+							$shortcodename[1] = Liga64Constants::All;
+							if(!in_array($id[1], $allRequests)) {
+								$shortCodeRequests[] = array('code' => $shortcodename[1], 'id' => $id[1], 'tag' => $tag[1]);
+								$allRequests[] = $id[1];
+							}
+						}
+						elseif(preg_match('/\[(.*?)[\]]/', $match[1][$j], $shortcodename)) {
+							$shortcodename[1] = Liga64Constants::All;
+							if(!in_array($id[1], $allRequests)) {
+								$shortCodeRequests[] = array('code' => $shortcodename[1]);
+								$allRequests[] = $id[1];
+							}
+						}
+						preg_match('/\[(.*)[\s]/', $match[1][$j], $shortcodename);
 				}
 			}
 		}
+
+		// starte Abfrage an Liga64
+		$ids = array();
+		try {
+			for($i = 0; $i < count($shortCodeRequests); $i++) {
+				$res = null;
+				switch(trim($shortCodeRequests[$i]['code'])) {
+					case Liga64Constants::Tabelle :
+						echo '"#'.($i + 1).' Lade Tabelle der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+						$res = liga64_requestTabelle($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
+					break;
+
+					case Liga64Constants::Setzliste :
+						echo '"#'.($i + 1).' Lade Setzliste der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+						$res = liga64_requestSetzliste($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
+					break;
+
+					case Liga64Constants::Wettkampf :
+						echo '"#'.($i + 1).' Lade Wettkämpfe der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+						$res = liga64_requestWettkampf($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
+					break;
+
+					default:
+						echo '"#'.($i + 1).' Lade Daten der Liga '.$shortCodeRequests[$i]['id'].' und des Tags '.$shortCodeRequests[$i]['tag']."\"<br/>\r\n";
+						$res = liga64_requestAll($shortCodeRequests[$i]['id'], $shortCodeRequests[$i]['tag']);
+					break;
+				}
+
+				if(isset($res)) {
+					$ls = new Liga64Store();
+					$ls->code = $shortCodeRequests[$i]['code'];
+					$ls->id = $shortCodeRequests[$i]['id'];
+					$ls->tag = $shortCodeRequests[$i]['tag'];
+					$ls->value = $res;
+
+					if(!in_array($ls->id, $ids)) {
+						$liga64store[] = $ls;
+						$ids[] = $ls->id;
+					}
+				}
+			}
+		}
+		catch(Exception $ex) {
+			echo "ERROR!\r\n";
+			echo $ex->getMessage();
+			echo ' (Code: '.$ex->getCode().')';
+			$requestOK = false;
+			$exitMessage = $ex->getMesssage();
+		}
+
+		wp_reset_postdata();
+		echo ob_get_clean();
+
+		$option_name = 'liga64_ligastore';
+		if(get_option($option_name) !== false) {
+			update_option($option_name, $liga64store);
+		}
+		else {
+			$deprecated = null;
+			$autoload = 'no';
+			add_option($option_name, $liga64store, $deprecated, $autoload);
+		}
 	}
-	catch(Exception $ex) {
-		echo "ERROR!\r\n";
-		echo $ex->getMessage();
-		$requestOK = false;
-		$exitMessage = $ex->getMesssage();
-	}
-
-
-
-
-	wp_reset_postdata();
-	echo ob_get_clean();
-
-
-	$option_name = 'liga64_ligastore';
-	if(get_option($option_name) !== false) {
-		update_option($option_name, $liga64store);
- 	}
 	else {
-		$deprecated = null;
-		$autoload = 'no';
-		add_option($option_name, $liga64store, $deprecated, $autoload);
+		$requestOK = false;
+		$exitMessage = 'Keine Berechtigung für diese Anfrage!';
 	}
+
 
 	if($requestOK) {
 		echo 'Ligen64 Records erfolgreich aktualisiert.';
@@ -412,15 +439,15 @@ function liga64_diasetzliste($atts) {
 
 	$wettkampftage = count($schuetzen[0]->Ergebnisse);
 
-	
+
 	$wettkampftageLabels = array();
 	for($i = 0; $i < $aktuellerWettkampfTag; $i++) {
 		$wettkampftageLabels[] = ($i + 1);
-		
-		
-		
+
+
+
 	}
-	
+
 	var_dump();
 
 	$chartName = 'liga64SetzlisteChart'.$atts['id'].microtime();
@@ -688,10 +715,10 @@ function liga64_setzliste($atts) {
 			break;
 		}
 	}
-	
+
 	$liga = $tabellenDaten->Ligen[0];
 	$aktuellerWettkampfTag = liga64_getCurrentWettkampfTag($liga);
-	
+
 	$setzliste = $liga->Setzliste;
 	$mannschaft = null;
 	$schuetzen = null;
@@ -842,25 +869,6 @@ function liga64_tabelle($atts) {
 	return $output;
 }
 
-function liga64_admin_actions() {
-	add_options_page('Liga64', 'Liga64', 'manage_options', __FILE__, 'liga64_admin');
-}
-
-function liga64_isJSONString($str) {
-	$isJSON = false;
-	if(is_string($str)) {
-		if(is_object(json_decode($str))) {
-			$isJSON = true;
-		}
-		elseif(is_array(json_decode($str))) {
-			$isJSON = true;
-		}
-		else
-			$isJSON = false;
-	}
-	return $isJSON;
-}
-
 function liga64_requestAll($ligaId, $tag) {
 	$searchObject = new stdClass();
 	$searchObject->Id = (int)$ligaId;
@@ -986,7 +994,7 @@ function liga64_request($ligaId, $tag, $searchObject = null, $method = null) {
 				return $response;
 			}
 			else {
-				throw new Exception($obj->Message);
+				throw new Exception($obj->Message, $obj->Code);
 			}
 		}
 		else {
@@ -1007,14 +1015,19 @@ function liga64_requestAPIKey() {
 
 	$source		= 'WordpressPluginv1';
 
-	$pfad = '/api/registerPage/';
+	$pfad = '/api/registerpage/';
 	$daten = '&host=' . $host . '&referer=' . $referer . '&comment=' . $comment. '&source=' . $source;
 
 	$urlParams = parse_url($host);
-	$socket = fsockopen($urlParams['host'], 80, $errno, $errstr, 50);
+	$port = 80;
+
+	if(liga64_startsWith($urlParams['host'], 'https')) {
+		$port 	= 443;
+	}
+
+	$socket = fsockopen($urlParams['host'], $port, $errno, $errstr, 50);
 	if (!$socket) {
-		echo "not connected";
-		return "";
+		$showErrorMessage = 'Verbindung zu Liga64 ('.$urlParams['host'].':'.$port.') nicht mögich!';
 	}
 	else {
 		$postData  = "POST ".$urlParams['path'].$pfad." HTTP/1.1\r\n";
@@ -1037,16 +1050,39 @@ function liga64_requestAPIKey() {
 		$res = substr($res, strpos($res,"\r\n\r\n")+4);
 		$res = explode("\r\n", $res);
 
-		for($i = 0; $i < count($res); $i++) {
-			if(preg_match('/^[a-f0-9]{32}$/', $res[$i]))  {
-				return $res[$i];
-			}
-		}
+		$liga64Message = json_decode($res[0]);
+		return $liga64Message->Key;
 	}
+}
+
+function liga64_mergeOptions($existing, $new) {
+	if(isset($new['liga64referer'])) {
+		$existing['liga64referer'] = $new['liga64referer'];
+	}
+	if(isset($new['liga64url'])) {
+		$existing['liga64url'] = $new['liga64url'];
+	}
+	if(isset($new['liga64apikey'])) {
+		$existing['liga64apikey'] = $new['liga64apikey'];
+	}
+	if(isset($new['liga64comment'])) {
+		$existing['liga64comment'] = $new['liga64comment'];
+	}
+	if(isset($new['liga64nonce'])) {
+		$existing['liga64nonce'] = $new['liga64nonce'];
+	}
+	return $existing;
+}
+
+function liga64_saveoptions($options) {
+	$existing 	= get_option('liga64_options');
+	$optionsToSave = liga64_mergeOptions($existing, $options);
+	update_option('liga64_options', $optionsToSave);
 }
 
 function liga64_admin() {
 	$requestURI = $_SERVER['REQUEST_URI'];
+	$showErrorMessage = null;
 
 	global $wpdb;
 
@@ -1054,7 +1090,7 @@ function liga64_admin() {
 		$apikey 		= liga64_requestAPIKey();
 		$liga64options 	= get_option('liga64_options');
 		$liga64options['liga64apikey'] = $apikey;
-		update_option('liga64_options', $liga64options);
+		liga64_saveoptions($liga64options);
 	}
 
 	if(isset($_POST['submit']))
@@ -1064,36 +1100,63 @@ function liga64_admin() {
 		$liga64referer 	= filter_var($_POST['liga64referer'], FILTER_SANITIZE_URL);
 		$liga64comment	= filter_var($_POST['liga64comment'], FILTER_SANITIZE_STRING);
 
+		// save preferences to db
 		if(	filter_var($liga64url, FILTER_VALIDATE_URL) &&
-			filter_var($liga64referer, FILTER_VALIDATE_URL) &&
-			filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/')))
-		) {
-
+				filter_var($liga64referer, FILTER_VALIDATE_URL) &&
+				(
+					filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/'))) ||
+					empty(trim($liga64apikey)) == true
+				))
+			{
 				$liga64options = array();
 				$liga64options['liga64url'] 	= $liga64url;
-				$liga64options['liga64apikey'] 	= $liga64apikey;
+				if(empty(trim($liga64apikey)) == false) {
+					$liga64options['liga64apikey'] 	= $liga64apikey;
+				}
 				$liga64options['liga64referer'] = $liga64referer;
 				$liga64options['liga64comment'] = $liga64comment;
-				update_option('liga64_options', $liga64options);
-
+				liga64_saveoptions($liga64options);
 			}
 			else {
-			var_dump(filter_var($liga64apikey, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp" =>'/^[a-f0-9]{32,64}$/'))));
-				die("error");
+				$showErrorMessage = 'Der hinterlegte API-Key ist ungültig!';
+				$liga64options = get_option('liga64_options');
+				if(!isset($liga64options) || $liga64options == false) {
+					$liga64options['liga64url'] = 'https://www.liga64.de';
+					$liga64options['liga64referer'] = get_option('siteurl');
+					$liga64options['liga64comment'] = get_option('blogname');
+				}
 			}
 	}
 	else {
+		// read preferences from db
 		$liga64options = get_option('liga64_options');
 		if(!isset($liga64options) || $liga64options == false) {
 			$liga64options['liga64url'] = 'https://www.liga64.de';
 			$liga64options['liga64referer'] = get_option('siteurl');
 			$liga64options['liga64comment'] = get_option('blogname');
+			$liga64options['liga64nonce'] = get_option('liga64nonce');
+
+			if(empty($liga64options['liga64nonce'])) {
+				$url = esc_url(admin_url().'admin-ajax.php?action=liga64Update');
+				$timestamp = mktime();
+				$nonce = wp_create_nonce($url.$liga64options['liga64referer'].$liga64options['liga64comment'].$timestamp);
+				$liga64options['liga64nonce'] = $nonce;
+				liga64_saveoptions($liga64options);
+			}
 		}
 	}
 ?>
   <div class="wrap">
     <h2>Einstellungen › Liga64 <a href="<?php echo $requestURI; ?>&requestAPIKey" class="add-new-h2">API-Key beantragen</a></h2>
-    <form method="post" action="" novalidate="novalidate">
+
+		<?php
+		if(isset($showErrorMessage)) {
+			echo '<div>';
+			echo $showErrorMessage;
+			echo '</div>';
+		}
+		?>
+		<form method="post" action="" novalidate="novalidate">
       <table class="form-table">
         <thead>
         </thead>
@@ -1131,7 +1194,7 @@ function liga64_admin() {
           <tr>
             <th scope="row">Chronjob-URL:</td>
             <td>
-              <input name="liga64chronjoburl" type="text" id="liga64chronjoburl" value="<?php echo esc_url(admin_url().'admin-ajax.php?action=liga64Update'); ?>" class="regular-text" style="width: 600px;" disabled>
+              <input name="liga64chronjoburl" type="text" id="liga64chronjoburl" value="<?php echo esc_url(admin_url().'admin-ajax.php?action=liga64Update&nounce='.$liga64options['liga64nonce']); ?>" class="regular-text" style="width: 600px;" disabled>
               <p class="description">Diesen Link via Cronjob aufrufen, damit die Daten über die Shortcodes aktualisiert werden.</p>
             </td>
           </tr>
