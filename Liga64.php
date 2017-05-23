@@ -337,14 +337,14 @@ function liga64_diaeinsaetze($atts) {
 	$output = ob_get_contents();
 
 
-	$chartName = 'liga64EinsatzChart'.$atts['id'].microtime();
-	$output .= '<canvas id="'.$chartName.'" width="'.$breite.'" height="'.$breite.'"></canvas>'."\r\n";
+	$chartName = 'liga64EinsatzChart'.esc_html($atts['id']).microtime();
+	$output .= '<canvas id="'.esc_html($chartName).'" width="'.esc_html($breite).'" height="'.esc_html($breite).'"></canvas>'."\r\n";
 	$output .= '<script>'."\r\n";
-	$output .= 'var ctx = document.getElementById("'.$chartName.'");'."\r\n";
+	$output .= 'var ctx = document.getElementById("'.esc_js($chartName).'");'."\r\n";
 	$output .= 'var myChart = new Chart(ctx, {'."\r\n";
 	$output .= '	type: \'doughnut\','."\r\n";
 	$output .= '	data: {'."\r\n";
-	$output .= '		labels: '.json_encode($arraySchuetzen).','."\r\n";
+	$output .= '		labels: '.esc_js(json_encode($arraySchuetzen)).','."\r\n";
 	$output .= '		datasets: [{';
 	//$output .= '			label: \''.$atts['filter'].'\',';
 	//$output .= '			data: '.json_encode($ergebnisMannschaft).',';
@@ -360,7 +360,7 @@ function liga64_diaeinsaetze($atts) {
 	$output .= '					"#ff4500"'."\r\n";
 	//$output .= '					"#ff00ff",'."\r\n";
 	$output .= '				],';
-	$output .= '				data: '.json_encode($arrayEinsatze)."\r\n";
+	$output .= '				data: '.esc_js(json_encode($arrayEinsatze))."\r\n";
 
 
 	$output .= '		}]';
@@ -450,23 +450,23 @@ function liga64_diasetzliste($atts) {
 
 	var_dump();
 
-	$chartName = 'liga64SetzlisteChart'.$atts['id'].microtime();
-	$output .= '<canvas id="'.$chartName.'" width="500" height="600"></canvas>'."\r\n";
+	$chartName = 'liga64SetzlisteChart'.esc_html($atts['id']).microtime();
+	$output .= '<canvas id="'.esc_html($chartName).'" width="500" height="600"></canvas>'."\r\n";
 	$output .= '<script>'."\r\n";
-	$output .= 'var ctx = document.getElementById("'.$chartName.'");'."\r\n";
+	$output .= 'var ctx = document.getElementById("'.esc_js($chartName).'");'."\r\n";
 	$output .= 'var myChart = new Chart(ctx, {'."\r\n";
 	$output .= '	type: \'line\','."\r\n";
 	$output .= '	data: {'."\r\n";
-	$output .= '		labels: '.json_encode($wettkampftageLabels).','."\r\n";
+	$output .= '		labels: '.esc_js(json_encode($wettkampftageLabels)).','."\r\n";
 	$output .= '		datasets: [{'."\r\n";
-	$output .= '			label: \''.$liste[0]['name'].'\','."\r\n";
-	$output .= '			data: '.json_encode($liste[0]['ergebnis']).','."\r\n";
-	$output .= '			backgroundColor: "'.liga64_getRGBACode(0).'"'."\r\n";
+	$output .= '			label: \''.esc_js($liste[0]['name']).'\','."\r\n";
+	$output .= '			data: '.esc_js(json_encode($liste[0]['ergebnis'])).','."\r\n";
+	$output .= '			backgroundColor: "'.esc_js(liga64_getRGBACode(0)).'"'."\r\n";
 	for($i = 1; $i < count($liste); $i++) {
 		$output .= '		}, {'."\r\n";
-		$output .= '			label: \''.$liste[$i]['name'].'\','."\r\n";
-		$output .= '			data: '.json_encode($liste[$i]['ergebnis']).','."\r\n";
-		$output .= '			backgroundColor: "'.liga64_getRGBACode($i).'"'."\r\n";
+		$output .= '			label: \''.esc_js($liste[$i]['name']).'\','."\r\n";
+		$output .= '			data: '.esc_js(json_encode($liste[$i]['ergebnis'])).','."\r\n";
+		$output .= '			backgroundColor: "'.esc_js(liga64_getRGBACode($i)).'"'."\r\n";
 	}
 	$output .= '		}]'."\r\n";
 	$output .= '	}'."\r\n";
@@ -530,12 +530,10 @@ function liga64_diateamchart($atts) {
 			if(preg_match('/'.$atts['filter'].'/', $wettkaempfe[$i]->Heimmannschaft->Name)) {
 				$ringeMannschaft = $wettkaempfe[$i]->RingeHeim;
 				$ringeGegner = $wettkaempfe[$i]->RingeGast;
-				//$begegnung = $wettkaempfe[$i]->Gastmannschaft->Name;
 			}
 			else {
 				$ringeMannschaft = $wettkaempfe[$i]->RingeGast;
 				$ringeGegner = $wettkaempfe[$i]->RingeHeim;
-				//$begegnung = $wettkaempfe[$i]->Heimmannschaft->Name;
 			}
 			$ergebnisMannschaft[] = $ringeMannschaft;
 			$ergebnisGegner[] = $ringeGegner;
@@ -545,23 +543,21 @@ function liga64_diateamchart($atts) {
 		}
 	}
 
-	$chartName = 'liga64TeamChart'.$atts['id'].microtime();
-	$output .= '<canvas id="'.$chartName.'" width="500" height="600"></canvas>'."\r\n";
+	$chartName = 'liga64TeamChart'.esc_html($atts['id']).microtime();
+	$output .= '<canvas id="'.esc_html($chartName).'" width="500" height="600"></canvas>'."\r\n";
 	$output .= '<script>'."\r\n";
-	$output .= 'var ctx = document.getElementById("'.$chartName.'");'."\r\n";
+	$output .= 'var ctx = document.getElementById("'.esc_js($chartName).'");'."\r\n";
 	$output .= 'var myChart = new Chart(ctx, {'."\r\n";
 	$output .= '	type: \'line\','."\r\n";
 	$output .= '	data: {'."\r\n";
-	$output .= '		labels: '.json_encode($begegnungen).','."\r\n";
+	$output .= '		labels: '.esc_js(json_encode($begegnungen)).','."\r\n";
 	$output .= '		datasets: [{';
-	$output .= '			label: \''.$atts['filter'].'\',';
-	$output .= '			data: '.json_encode($ergebnisMannschaft).',';
-	//$output .= '			backgroundColor: "rgba(153,255,51,0.4)"';
+	$output .= '			label: \''.esc_js($atts['filter']).'\',';
+	$output .= '			data: '.esc_js(json_encode($ergebnisMannschaft)).',';
 	$output .= '			backgroundColor: "rgba(46,204,113,0.5)"';
 	$output .= '		}, {';
 		$output .= '			label: \'Gegner\',';
-		$output .= '			data: '.json_encode($ergebnisGegner).',';
-		//$output .= '			backgroundColor: "rgba(255,153,0,0.4)"';
+		$output .= '			data: '.esc_js(json_encode($ergebnisGegner)).',';
 		$output .= '			backgroundColor: "rgba(231,76,60,0.5)"';
 	$output .= '		}]';
 	$output .= '	}';
@@ -617,18 +613,18 @@ function liga64_wettkampf($atts) {
 
 	$tabelle  = '';
 	if($breiteStyle != '100%') {
-		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.$breite.'" border="1" cellpadding="5" cellspacing="0" style="width: '.$breite.';">';
+		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.esc_html($breite).'" border="1" cellpadding="5" cellspacing="0" style="width: '.esc_html($breite).';">';
 	}
 	else {
-		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.$breite.'" border="1" cellpadding="5" cellspacing="0">';
+		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.esc_html($breite).'" border="1" cellpadding="5" cellspacing="0">';
 	}
 	$tabelle .= "  <tbody>\r\n";
 	$tabelle .= "    <tr>\r\n";
 	$colspan = 2;
 	if(isset($liga->Duell) && $liga->Duell)
 		$colspan++;
-	$tabelle .= '      <th colspan="'.$colspan.'">'.$wettkampf->Heimmannschaft->Name.'</th>'."\r\n";
-	$tabelle .= '      <th colspan="'.$colspan.'">'.$wettkampf->Gastmannschaft->Name.'</th>'."\r\n";
+	$tabelle .= '      <th colspan="'.esc_html($colspan).'">'.esc_html($wettkampf->Heimmannschaft->Name).'</th>'."\r\n";
+	$tabelle .= '      <th colspan="'.esc_html($colspan).'">'.esc_html($wettkampf->Gastmannschaft->Name).'</th>'."\r\n";
 	$tabelle .= "    </tr>\r\n";
 
 	$duellHeim = (int)$wettkampf->Heimmannschaft->Duellpunkte;
@@ -644,39 +640,39 @@ function liga64_wettkampf($atts) {
 			(bool)$heimSchuetze->Ergebnis->IsAK ||
 			(bool)$gastSchuetze->Ergebnis->IsAK
 		) {
-			$akClass = ' style="color: lightgrey" class="ak-schuetze"';
-			$akLabel = ' <span title="außer Konkurrenz">(AK)</span>';
+			$akClass = esc_html(' style="color: lightgrey" class="ak-schuetze"');
+			$akLabel = esc_html(' <span title="außer Konkurrenz">(AK)</span>');
 		}
 		$tabelle .= "    <tr$akClass>\r\n";
 		if (!empty($heimSchuetze->Vorname)) {
-			$tabelle .= '      <td>' . $heimSchuetze->Vorname . ' ' . $heimSchuetze->Nachname . $akLabel . '</td>' . "\r\n";
+			$tabelle .= '      <td>'.esc_html($heimSchuetze->Vorname). ' ' .esc_html($heimSchuetze->Nachname).esc_html($akLabel).'</td>'."\r\n";
 		} else {
 			$tabelle .= '      <td> </td>'."\r\n";
 		}
-		$tabelle .= '      <td>'.$heimSchuetze->Ergebnis->Ringe.'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($heimSchuetze->Ergebnis->Ringe).'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$heimSchuetze->Ergebnis->Punkte.'</td>'."\r\n";
+			$tabelle .= '      <td>'.esc_html($heimSchuetze->Ergebnis->Punkte).'</td>'."\r\n";
 		if (!empty($gastSchuetze->Vorname)) {
-			$tabelle .= '      <td>' . $gastSchuetze->Vorname . ' ' . $gastSchuetze->Nachname . $akLabel . '</td>' . "\r\n";
+			$tabelle .= '      <td>'.esc_html($gastSchuetze->Vorname).' '.esc_html($gastSchuetze->Nachname).esc_html($akLabel).'</td>'."\r\n";
 		} else {
 			$tabelle .= '      <td> </td>'."\r\n";
 		}
-		$tabelle .= '      <td>'.$gastSchuetze->Ergebnis->Ringe.'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($gastSchuetze->Ergebnis->Ringe).'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$gastSchuetze->Ergebnis->Punkte.'</td>'."\r\n";
+			$tabelle .= '      <td>'.esc_html($gastSchuetze->Ergebnis->Punkte).'</td>'."\r\n";
 
 		$tabelle .= "    </tr>\r\n";
 	}
 
 	$tabelle .= "    <tr>\r\n";
 	$tabelle .= '      <td>Gesamt</td>'."\r\n";
-	$tabelle .= '      <td>'.$wettkampf->RingeHeim.'</td>'."\r\n";
+	$tabelle .= '      <td>'.esc_html($wettkampf->RingeHeim).'</td>'."\r\n";
 	if(isset($liga->Duell) && $liga->Duell)
-		$tabelle .= '      <td>'.$duellHeim.'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($duellHeim).'</td>'."\r\n";
 	$tabelle .= '      <td>Gesamt</td>'."\r\n";
-	$tabelle .= '      <td>'.$wettkampf->RingeGast.'</td>'."\r\n";
+	$tabelle .= '      <td>'.esc_html($wettkampf->RingeGast).'</td>'."\r\n";
 	if(isset($liga->Duell) && $liga->Duell)
-		$tabelle .= '      <td>'.$duellGast.'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($duellGast).'</td>'."\r\n";
 	$tabelle .= "    </tr>\r\n";
 	$tabelle .= '  </tbody>';
 	$tabelle .= '</table>';
@@ -705,8 +701,6 @@ function liga64_setzliste($atts) {
 	}
 	$breiteStyle = $breite;
 
-	//$tabellenDaten = liga64_requestTabelle($atts['id'], $atts['tag']);
-	//$tabellenDaten = json_decode($tabellenDaten);
 	$liga64store = get_option('liga64_ligastore');
 	$tabellenDaten = null;
 	for($i = 0; $i < count($liga64store); $i++) {
@@ -738,23 +732,23 @@ function liga64_setzliste($atts) {
 
 	$tabelle  = '';
 	if($breiteStyle != '100%') {
-		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.$breite.'" border="1" cellpadding="5" cellspacing="0" style="width: '.$breite.';">';
+		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.esc_html($breite).'" border="1" cellpadding="5" cellspacing="0" style="width: '.esc_html($breite).';">';
 	}
 	else {
-		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.$breite.'" border="1" cellpadding="5" cellspacing="0">';
+		$tabelle .= '<table class="liga64-setzliste table table-bordered table-hover" width="'.esc_html($breite).'" border="1" cellpadding="5" cellspacing="0">';
 	}
 	$tabelle .= "  <tbody>\r\n";
 	$tabelle .= "    <tr>\r\n";
 	$tabelle .= "      <th>Name</th>\r\n";
 	for($i = 0; $i < $wettkampftage; $i++) {
-		$tabelle .= '      <th>'.($i + 1).'</th>'."\r\n";
+		$tabelle .= '      <th>'.esc_html($i + 1).'</th>'."\r\n";
 	}
 	$tabelle .= "      <th>Schnitt</th>\r\n";
 	$tabelle .= "      <th>Einsätze</th>\r\n";
 	$tabelle .= "    </tr>\r\n";
 	for($i = 0; $i < count($schuetzen); $i++) {
 		$tabelle .= "    <tr>\r\n";
-		$tabelle .= '      <td>'.$schuetzen[$i]->Schuetze.'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($schuetzen[$i]->Schuetze).'</td>'."\r\n";
 		$einsatz = 0;
 		for($j = 0; $j < $wettkampftage; $j++) {
 			$ergebnis = $schuetzen[$i]->Ergebnisse[$j]->Ringe;
@@ -763,10 +757,10 @@ function liga64_setzliste($atts) {
 			else {
 				$einsatz++;
 			}
-			$tabelle .= '      <td>'.$ergebnis.'</td>'."\r\n";
+			$tabelle .= '      <td>'.esc_html($ergebnis).'</td>'."\r\n";
 		}
-		$tabelle .= '      <td>'.$schuetzen[$i]->Schnitt.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$einsatz.'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($schuetzen[$i]->Schnitt).'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($einsatz).'</td>'."\r\n";
 		$tabelle .= "    </tr>\r\n";
 	}
 	$tabelle .= '  </tbody>';
@@ -850,13 +844,13 @@ function liga64_tabelle($atts) {
 			$trStyle = ' style="font-weight: bold"';
 		}
 
-		$tabelle .= "    <tr$trStyle>\r\n";
-		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Rang.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$obj->Name.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Punkte.':'.$obj->Tabellenplatzierung->VergebenePunkte.'</td>'."\r\n";
+		$tabelle .= '    <tr'.esc_html($trStyle).'>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($obj->Tabellenplatzierung->Rang).'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($obj->Name).'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($obj->Tabellenplatzierung->Punkte).':'.esc_html($obj->Tabellenplatzierung->VergebenePunkte).'</td>'."\r\n";
 		if(isset($liga->Duell) && $liga->Duell)
-			$tabelle .= '      <td>'.$obj->Tabellenplatzierung->GewonneneDuelle.':'.$obj->Tabellenplatzierung->VerloreneDuelle.'</td>'."\r\n";
-		$tabelle .= '      <td>'.$obj->Tabellenplatzierung->Ringe.':'.$obj->Tabellenplatzierung->VergebeneRinge.'</td>'."\r\n";
+			$tabelle .= '      <td>'.esc_html($obj->Tabellenplatzierung->GewonneneDuelle).':'.esc_html($obj->Tabellenplatzierung->VerloreneDuelle).'</td>'."\r\n";
+		$tabelle .= '      <td>'.esc_html($obj->Tabellenplatzierung->Ringe).':'.esc_html($obj->Tabellenplatzierung->VergebeneRinge).'</td>'."\r\n";
 		$tabelle .= "    </tr>\r\n";
 	}
 	$tabelle .= '  </tbody>';
